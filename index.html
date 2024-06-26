@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title></title>
+	<link rel="stylesheet" href="./assets/css/stst.min.css" />
+</head>
+
+<body>
+	<div class="mainWrap">
+		<img class="main_img" src="" alt="">
+		<div class="section">
+			<p class="time">time</p>
+
+			<div>
+				<p class="temp"></p>
+				<div>
+					<img src="" alt="weather" class='wt_img'>
+				</div>
+			</div>
+		</div>
+
+		<div class="section">
+			<div class="search">
+				<input type="text" id="result" placeholder="도로명주소를 적어주세요." value="">
+				<button type="button" class="a"><img src="./assets/img/search.png"></button>
+			</div>
+
+			<div class="map_wrap">
+				<div id="map"></div>
+			</div>
+
+			<div class="btnWrap">
+				<button class="moveMarker" data-lat="37.5666805" data-lng="126.9784147">서울</button>
+				<button class="moveMarker" data-lat="37.288913" data-lng="127.053499">경기</button>
+				<button class="moveMarker" data-lat="37.456013" data-lng="126.705202">인천</button>
+				<button class="moveMarker" data-lat="36.350467" data-lng="127.384890">대전</button>
+				<button class="moveMarker" data-lat="35.1595454" data-lng="126.8526012">광주</button>
+				<button class="moveMarker" data-lat="35.8714354" data-lng="128.601445">대구</button>
+				<button class="moveMarker" data-lat="35.1795543" data-lng="129.0756416">부산</button>
+				<button class="moveMarker" data-lat="33.4890113" data-lng="126.4983023">제주</button>
+				<button class="moveMarker" data-lat="" data-lng="">내 위치</button>
+			</div>
+			<div class="weatherInfo">
+				<h2>Weather Info</h2>
+				<hr>
+				<h3>Temp_max/min</h3>
+				<p class="info"></p>
+				<h3>Windchill</h3>
+				<p class="info"></p>
+				<h3>cloud</h3>
+				<p class="info"></p>
+				<h3>wind</h3>
+				<p class="info"></p>
+				<h3>sunset</h3>
+				<p class="info"></p>
+			</div>
+		</div>
+
+	</div>
+	<script type="text/javascript"
+		src="//dapi.kakao.com/v2/maps/sdk.js?appkey=38e3bd548754e2a4ad2c4539b92b7bee&libraries=services"></script>
+	<script type="text/javascript" src="./node_modules/axios/dist/axios.min.js"></script>
+	<script>
+		const WEATHER_API_KEY = '3970055ba65c0891854ca5d833a38140';
+		let timer = document.querySelector('.time');
+		setInterval(() => {
+			timeFunc();
+		}, 1000);
+
+		// geolocation이 실행 가능한 경우와 불가능한 경우
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition((position) => {
+				// geolocation을 통해 받아온 좌표 정보를 저장할 변수 생성
+				let my_lat = position.coords.latitude;
+				let my_lng = position.coords.longitude;
+
+				let loc_lat = position.coords.latitude;
+				let loc_lng = position.coords.longitude;
+				let message = "";
+
+
+				/** 맵 생성 */
+				const map = MapMaker(loc_lat, loc_lng);
+				const marker = MakeMarker(map, loc_lat, loc_lng);
+				// 마커 찍기
+				marker.setMap(map);
+
+				// 맵 클릭 시 마커 생성 이벤트
+				kakao.maps.event.addListener(map, 'click', function (mouseEvent) {
+					// 클릭한 위도, 경도 정보를 가져옵니다 
+					let latlng = mouseEvent.latLng;
+					// 마커 위치를 클릭한 위치로 옮깁니다
+					marker.setPosition(latlng);
+					// 위도 경도 변수에 위도 경도 정보를 넣어줍니다.
+					loc_lat = latlng.getLat().toFixed(6);
+					loc_lng = latlng.getLng().toFixed(6);
+					MoveMap(loc_lat, loc_lng, map, marker);
+				});
+				// 검색을 위한 변수
+				let geocoder = new kakao.maps.services.Geocoder();
+				document.querySelector('.a').addEventListener('click', e => {
+					let search = Surf();
+					console.log('검색이벤트 발생시작');
+					SearchMap(loc_lat, loc_lng, map, marker, search, geocoder);
+				})
+
+				// 각 지역별 버튼
+				let btn = document.querySelectorAll('.moveMarker');
+				btn.forEach((v, i) => v.addEventListener('click', e => {
+					// 도시 별 해야함..
+					if (i == btn.length - 1) {
+						loc_lat = my_lat;
+						loc_lng = my_lng;
+					} else {
+						loc_lat = Number(v.dataset.lat);
+						loc_lng = Number(v.dataset.lng);
+					}
+
+					marker.setPosition(new kakao.maps.LatLng(loc_lat, loc_lng));
+					MoveMap(loc_lat, loc_lng, map, marker);
+				}));
+
+			});
+		} else {
+			alert("위치 조회 불가능");
+		}
+
+
+
+		// 함수
+		/** ----------------------- 시간 -------------------------------*/
+		function timeFunc() {
+			const date = new Date();
+
+			let arr = [date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()];
+			arr = arr.map(e => e < 10 ? '0' + e : e);
+			let printTime = (`${arr[0]}-${arr[1]}-${arr[2]} ${arr[3]}:${arr[4]}:${arr[5]}`);
+
+			timer.innerHTML = printTime;
+		}
+		/** -------------------------- 생성 관련 ------------------------------ */
+		/** 맵 생성 */
+		function MapMaker(lat, lng) {
+			let container = document.getElementById('map');
+			let options = {
+				center: new kakao.maps.LatLng(lat, lng),
+				level: 3
+			}
+			let map = new kakao.maps.Map(container, options);
+			GetInfo(lat, lng);
+
+			return map;
+		}
+
+		/** 마커 생성 함수 */
+		function MakeMarker(map, lat, lng) {
+			const markerPosition = new kakao.maps.LatLng(lat, lng);
+			const marker = new kakao.maps.Marker({
+				position: markerPosition
+			});
+			return marker;
+		}
+
+		/** -------------------------- 위치이동 및 검색 관련 ------------------------------ */
+		// 지도가 움직이게끔 하는 함수(marker생성 시, 버튼 클릭시)
+
+		function MoveMap(lat, lng, map, marker) {
+			const moveLatlng = new kakao.maps.LatLng(lat, lng);
+			map.panTo(moveLatlng);
+			GetInfo(lat, lng);
+			marker.setMap(map);
+
+		}
+		function Surf() {
+			return document.querySelector('#result').value
+		}
+		// 주소 검색하여 맵 이동시키는 함수
+		function SearchMap(lat, lng, map, marker, search, geocoder) {
+			geocoder.addressSearch(search, function (result, status) {
+
+				// 정상적으로 검색이 완료됐으면 
+				if (status === kakao.maps.services.Status.OK) {
+					console.log('실행성공');
+
+					lat = result[0].y;
+					lng = result[0].x;
+					// 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+					MoveMap(lat, lng, map, marker);
+					marker.setPosition(new kakao.maps.LatLng(lat, lng));
+				} else {
+					alert('유효한 도로명 주소를 적어주세요.');
+					return;
+				}
+			});
+		}
+
+
+		/** -------------------------- 날씨 api 받아오는 함수 및 날씨 api 정보 처리 함수들 --------------------------*/
+		async function GetInfo(lat, lng) {
+			let json = null;
+			try {
+				const response = await
+					axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}&lang=KR&units=metric`);
+				json = response.data;
+			} catch (e) {
+				console.error(e);
+				alert('요청 처리 실패');
+				return;
+			}
+			console.log(json);
+			let inputInfo = document.querySelectorAll(".info");
+			let WeatherInfo = [];
+			//	최고/최저 온도
+			WeatherInfo.push(json.main.temp_max.toFixed(1) + "℃" + " / " + json.main.temp_min.toFixed(1) + "℃");
+			// 체감 온도
+			WeatherInfo.push(json.main.feels_like + "℃");
+			// 흐림 정도
+			WeatherInfo.push(json.clouds.all + "%");
+			// 바람 세기
+			WeatherInfo.push(json.wind.speed + "m/s");
+			// 일몰 시간
+			const sunset = UnixToDate(json.sys.sunset);
+			WeatherInfo.push(sunset);
+
+			// weatherinfo 넣기
+			inputInfo.forEach((v, i) => {
+				v.innerHTML = WeatherInfo[i];
+			});
+
+			const weatherCondition = json.weather[0].id;
+			console.log(weatherCondition);
+			console.log(typeof weatherCondition);
+
+			// 날씨에 따른 아이콘
+			const wt_img = document.querySelector('.wt_img');
+			let img_path = "./assets/img/";
+			let main_img = document.querySelector(".main_img");
+			let wt_imgSrc = '';
+			if (weatherCondition >= 200 && weatherCondition <= 232) {
+				wt_imgSrc = './assets/img/storm.png';
+				main_img.src = img_path + "main_storm.jpg";
+			} else if (weatherCondition >= 300 && weatherCondition <= 531) {
+				wt_imgSrc = './assets/img/rainy.png';
+				main_img.src = img_path + "main_rain.jpg";
+			} else if (weatherCondition >= 600 && weatherCondition <= 622) {
+				wt_imgSrc = './assets/img/snowy.png';
+				main_img.src = img_path + "main_snow.jpg";
+			} else if (weatherCondition >= 700 && weatherCondition <= 781 || weatherCondition >= 803) {
+				wt_imgSrc = './assets/img/cloud-computing.png';
+				main_img.src = img_path + "main_cloud.jpg";
+			} else if (weatherCondition == 800) {
+				wt_imgSrc = './assets/img/sun.png';
+				main_img.src = img_path + "main_clear.jpg";
+			} else if (weatherCondition == 801) {
+				wt_imgSrc = './assets/img/cloudy.png';
+				main_img.src = img_path + "main_suncloud.jpg";
+			} else if (weatherCondition == 802) {
+				wt_imgSrc = './assets/img/cloud.png';
+				main_img.src = img_path + "main_clearcloud.jpg";
+			}
+			wt_img.src = wt_imgSrc;
+
+			// 평균기온 넣기
+			document.querySelector('.temp').innerHTML = json.main.temp.toFixed(1) + "℃";
+		}
+		/** 시간, 분, 초 가 10보다 작으면 앞에 0을 넣어주는 함수 */
+		function LowerTen(number) {
+			return number > 9 ? number : "0" + number;
+		}
+		/** unix시간을 date로 바꿔주는 함수 (sunset이 unix시간이기에 만들었음) */
+		function UnixToDate(unix_time) {
+			const date = new Date(unix_time * 1000);
+			const hour = LowerTen(date.getHours());
+			const minute = LowerTen(date.getHours());
+			const str = hour > 11 ? "0" + (hour - 12) + ":" + minute + "PM" : hour + ":" + minute + "AM";
+			return str;
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,171 @@
+@import "./reset.css";
+
+@font-face {
+    font-family: "DalseoDarling";
+    src: url(./font_ttf2/DalseoHealingMedium.ttf) format("truetype");
+    font-weight: normal;
+}
+
+body {
+    padding: 0px;
+    margin: 0px;
+    font-family: "DalseoDarling";
+    src: url(./font_ttf2/DalseoHealingMedium.ttf) format("truetype");
+    font-weight: normal;
+}
+.mainwrap {
+    background-color: black;
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 1280px;
+    margin: 0 auto;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding: 20px;
+    box-sizing: border-box;
+    flex-direction: row;
+
+}
+
+.nav {
+    width: 100%;
+    text-align: center;
+    background-color: white;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+
+.nav a {
+    color: black;
+    font-size: 40px;
+    text-decoration: none;
+
+}
+
+.map {
+    width: 40%;
+    background-color: white;
+    flex: 1 1 auto;   
+}
+
+.weatherinfo {
+    width: 40%;
+    background-color: black;
+    flex: 1 1 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 5px;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.weatherinfo > div:first-of-type {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    
+}
+
+.weatherinfo > div:first-of-type > div {
+    background-color: white;
+}
+
+.weatherinfo #a {
+    background-color: white;
+    width: 100%;
+    height: 200px;
+
+}
+
+
+.weatherinfo img {
+    width: 100%;
+}
+
+
+.btnwrap {
+    margin-right: auto;
+    
+}
+
+.btnwrap button {
+    font-family: "DalseoDarling";
+    src: url(./font_ttf2/DalseoHealingMedium.ttf) format("truetype");
+    font-weight: normal;
+}
+
+.weekly {
+    width: 100%;
+    height: 500px;
+    background-color: black;
+    position: relative;
+}
+
+.weekindiv{
+    width: 95%;
+    height: 430px;
+    background-color: white;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    box-sizing: border-box;
+    padding: 15px;
+    justify-content: space-between;
+    display: flex;   
+}
+
+#wrap1 > div {
+    background-color: gray;
+    width: 100%;
+    height: 15%;
+    margin: 15px;
+    
+}
+
+#wrap2 > div {
+    background-color: gray;
+    width: 100%;
+    height: 15%;
+    margin: 15px;
+    
+}
+
+#wrap3 > div {
+    background-color: gray;
+    width: 100%;
+    height: 15%;
+    margin: 15px;
+}
+
+#wrap4 > div {
+    background-color: gray;
+    width: 100%;
+    height: 15%;
+    margin: 15px;
+}
+
+#wrap5 > div {
+    background-color: gray;
+    width: 100%;
+    height: 15%;
+    margin: 15px;
+}
+
+.weekly > h3 {
+    text-align: center;
+    font-size: 30px;
+    color: white;
+}
+
+footer {
+    width: 100%;
+    height: 50px;
+    background-color: white;
+}
+
